@@ -5,6 +5,7 @@
 - [Introdução](#casos-de-uso-dos-serviços-da-aws)
 - [Regiões](#regiões)
 - [IAM e AWS CLI](#iam-identity-and-access-management-e-aws-cli)
+- [Fundamentos EC2](#fundamentos-ec2)
 
 ## Casos de uso dos serviços da AWS
 
@@ -278,3 +279,146 @@ IAM Access Advisor (user-level)
 
 No AWS Console, dentro do IAM, clique em 'Credential Report'e depois em 'Download credential Report'
 No AWS Console, dentro do IAM, clique en 'Users', selecione o usuário e depois clique em 'Access Advisor'
+
+## Fundamentos EC2
+
+### EC2 Básico
+
+EC2 significa Elastic Compute Cloud e é uma Infrastructure as a Service
+
+Consiste em vários serviços:
+
+- Aluguel de máquina virtual (EC2 Instances)
+- Guardar dados em drivers virtuais (EBS)
+- Distribuir load entre máquina (load balance) (ELB)
+- Escalar os serviços utilizando auto-scaling groups (ASG)
+
+Tamanhos e configurações do EC2:
+
+- Sistema operacional: Linux, Windows, MacOS
+- Quantidade de poder computacional e núcleos (CPU)
+- Quantidade de RAM
+- Quantidade de armazenamento
+    Network-attached(EBS e EFS)
+    Hardware-attached(EC2 Instance Store)
+- Tipo de rede: Velocidade, IPs públicos
+- Regras de Firewall
+- Configurações de inicialização: EC2 User Data
+
+EC2 User Data
+
+É possível configurar a inicialização das instâncias utilizando EC2 User data script
+Dessa maneira podemos dar comandos para serem feitas algumas configurações enquanto a máquina está sendo iniciada
+Esse script roda uma vez quando a instância é inciada pela primeira vez
+EC2 user data é utilizada para automatizar algumas tarefas na hora do boot:
+
+- Instalar atualizações
+- Instalar softwares
+- Baixar arquivos da internet
+- Entre outras coisas
+
+o EC2 USer Data Script roda com o usuário root da instância
+
+Existem vários tipos/pacotes de instâncias de EC2, cada um com suas configurações, indo de configurações bem simples até configurações extremamente robustas.
+
+### Subindo uma instância EC2 na Prática
+
+- Primeiro procure por EC2 no AWS Console e entre no painel do EC2
+- Clique em 'Instances' e depois em 'Launch Instances'
+- Em seguida escolha as configurações necessárias e clique em 'Launch Instance'
+
+### Tipos de Instâncias EC2
+
+É possível utilizar diferentes tipos de instâncias EC2 que são otimizadas para diferentes casos de uso
+Podemos acessar a descrição delas aqui: [https://aws.amazon.com/pt/ec2/instance-types/]
+
+Os nomes seguem a seguinte estrutura:
+
+m5.2xLarge
+
+m: instance class
+5: generation
+2xLarge: tamanho da instância (quanto maior, mais cpu, ram, armazenamento etc)
+
+Tipo para Propósitos Gerais (General Purpose):
+Sáo boas para uma diversidade de casos como web servers e repositórios de código
+Possuem um bom balanço entre CPU, memória e rede
+
+Tipo para Computação Otimizada (Compute Optimized):
+Sào boas para tarefas que precisam de um computação intensiva que precisa de processadores de alta performance
+Processamento de grande volume de dados (Batch processing)
+Web server de alta performance
+High performance computing (HPC)
+Machine Learning
+Servidores dedicados para jogos
+
+Tipo com Memória Otimizada (Memory Optimized)
+Possuem uma grande performance para processar grandes volumes de dados na RAM
+Bancos de dados de alta performance
+Cache distribuído para web
+Banco em memória para BI
+
+Tipo com Armazenamento Otimizado (Storage Optimized)
+Utilizado para tarefas que precisam de muitas escrita e leitura ou acessar um grande volume de dados no armazenamento
+
+### Introdução a Grupo de Segurança/Firewall nas instâncias EC2
+
+Grupos de Segurança são o fundamento de segurança de rede na AWS
+Eles controlam como o trafego é permitido para dentro ou para fora das instâncias EC2
+Grupos de segurança contém somente regras de permissão
+As regras de grupos de segurança podem fazer referência por IP ou por grupo de segurança
+
+Os grupos de segurança atuam como um 'firewall'nas instâncias EC2
+
+Eles regulam:
+
+- Acesso à portas
+- IPs autorizados
+- O tráfego de rede que chega de fora para dentro da instância
+- O tráfego de rede que sai da instância
+
+Um grupo de segurança pode ser usado por várias instâncias e uma instância pode ter vários grupos de segurança
+Grupos de segurança são vinculados à região
+Os grupos funcionam fora da instância, se alguma requisição for bloqueado ela nem chegará até a instância do EC2
+É interessante manter um grupo de segurança separado para acesso via SSH
+Se a aplicação não estiver podendo ser acessada (time out), provavelmente é um problema de grupo de segurança
+Caso a aplicação retorne um erro de 'connection refused', então provavelmente é um erro na aplicação
+Por padrão todo o tráfego para dentro da instância é bloqueado e todo tráfego para fora é permitido.
+
+É possível referenciar grupos de segurança em outros grupos de segurança ou seja é possível realizar permissões de acesso baseada em outros grupos de segurança
+Por exemplo:
+
+Instância A
+Grupo de segurança 1:
+
+- Permite tráfego para dentro da instância
+    Permite tráfego de instâncias que possuam o Grupo de Segurança 1
+    Permite tráfego de instâncias que possuam o Grupo de Segurança 2
+
+Então qualquer outra instância que possuir o grupo de segurança 1 ou 2 terá permissão de acessar a Instância A
+
+Exemplo:
+
+Instância B
+  Possui Grupo de Segurança 2
+
+Instância C
+  Possui Grupo de Segurança 1
+
+Instância D
+  Possui Grupo de Segurança 3
+
+B -> A = permitido (faz parte do grupo 2)
+C -> A = permitido (faz parte do grupo 1)
+D -> A = não permitido (não faz parte nem do grupo 1 nem do grupo 2)
+
+Portas Padrões:
+
+- 22 -> SSH - logar em uma instância Linux
+- 21 -> FTP (File Transfer Protocol) - upload files into a file share
+- 22 -> SFTP (Secure File Transfer Protocol) - upload file using SSH
+- 80 -> HTTP - access unsecured websites
+- 443 -> HTTPS - access secured websites
+- 3389 -> RDP (Remote Desktop Protocol) - logar em uma instância Windows
+
+### Grupos de Segurança na Prática
