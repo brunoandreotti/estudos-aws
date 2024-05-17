@@ -30,6 +30,14 @@
   - [Grupos de Segurança na Prática](#grupos-de-segurança-na-prática)
   - [Vinculando Roles em uma Instância EC2](#vinculando-roles-em-uma-instância-ec2)
   - [Tipos de Pacotes EC2](#tipos-de-pacotes-ec2)
+- [EC2 - Solution Architect](#ec2---solution-architect)
+  - [Privado x Público x Elastic IP](#privado-x-público-x-elastic-ip)
+  - [IP Privado x IP Público x Elastic IP na Prática](#ip-privado-x-ip-público-x-elastic-ip-na-prática)
+  - [Placement Groups](#placement-groups)
+  - [Placement Groups na Prática](#placement-groups-na-prática)
+  - [Elastic Network Interfaces (ENI)](#elastic-network-interfaces-eni)
+  - [Elastic Network Interfaces (ENI) na Prática](#elastic-network-interfaces-eni-na-prática)
+  - [EC2 Hibernate](#ec2-hibernate)
 
 ## Casos de uso dos serviços da AWS
 
@@ -524,3 +532,127 @@ Por exemplo, para executar o comando 'aws iam list-users' no instância é neces
 - EC2 Dedicated Instance
   - Possui uma instância dedicada em um hardware dedicado, mas pode ser que compartilhe o hardware com outros usuários
   - A diferente comparando com o Dedicated Hosts, é que no Dedicated Hosts você tem acesso total ao servidor físico em sí.
+
+## EC2 - Solution Architect
+
+### Privado x Público x Elastic IP
+
+- IP Público
+  - Significa que a máquina pode ser identificada na internet
+  - Precisa ser única dentro de toda a internet (dois máquinas não podem ter o mesmo ip público)
+
+- IP Privada
+  - Significa que a máquina pode ser identificada somente dentro da rede privada
+  - Os IP precisam ser únicos somente dentro da rede privada
+  - Mas duas redes privadas diferentes podem conter os mesmo IPs dentro delas pois elas estão separadas
+  - As máquinas dentro dessa rede privada se conectarão na internet através de um NAT + internet gateway (proxy)
+  - Somente um range específico de IPs podem ser utilizados como IPs privados
+
+- IP Elastic
+  - Quando encerra e inicia uma instância do EC2, o IP público da instância é alterado
+  - Caso necessite de um IP público fixo, será necessário um Elastic IP
+  - Elastic IP é um IP IPv4 que você possui desde que você não delete ele
+  - Você pode vincular a uma instância de cada vez
+  - Com isso é possível mascarar uma falha em uma instância redirecionando esse IP fixo para outra instância
+  - Porém não é uma alternativa muito boa, o melhor é utilizar um Load Balancer.
+
+### IP Privado x IP Público x Elastic IP na Prática
+
+Por padrão uma instância do EC2 vem com uma IP privado para o rede interna AWS e uma IP público para acessar a web
+
+Ao entrar nos detalhes da instância no EC2 é possível visualizar o IP público no campo 'Public IPv4 address'na aba 'Details'
+
+Somente é possível conectar na instância EC2 através do ssh utilizando o IP público da instância, uma vez que o IP privado somente é reconhecido na rede interna da AWS e nós não estamos conectados a essa rede interna.
+
+Toda a vez que a instância do EC2 é parada e depois inciada novamente, o IP público é alterado.
+
+Para ter um IP público fixo precisamos de um Elastic IP
+
+Para isso, na dashboard do EC2 vá em 'Network e Security' e depois em 'Elastic IP' e clique em 'Allocate Elastic Ip Address'
+
+Para associar o Elastic IP a uma instância, selecione o IP desejado, clique em 'Actions' e depois em 'Associate Elastic IP Address', após isso selecione a instância desejada e salve.
+
+### Placement Groups
+
+Ao criar as instâncias da AWS, é possível informar o lugar que você quer que ela fique podendo ser dentro da mesma Availability Zone (AZ), ou até mesmo no mesmo Data Center dentro da AZ.
+
+Quando um Placement Group é criado, é possível informar as seguintes estratégias para o grupo:
+
+- Clusters: Junte as instâncias em um grupo de baixa latência em uma única AZ
+- Spread: Espalhe instâncias entre hardware subjacentes (máximo de 7 instâncias por grupo por AZ) - utilizado para aplicações críticas
+- Partition: Espalhe instâncias entre várias partições diferentes (em diferentes sets de racks de hardware) em um AZ. Podendo escalar em centenas de instâncias por grupo
+
+Clusters:
+
+Menor latência, maior largura de banda, porém mais suscetível a falhas.
+
+- As várias instâncias do EC2 ficarão na mesma AZ, dessa forma elas terão a menor latência de comunicação entre elas e uma maior banda.
+- Porém, por estarem todas as instâncias na mesma AZ, caso ela falhe, todas as instâncias falharão ao mesmo tempo
+- Utilizada para aplicações que precisam de uma latência extremamente baixa e uma grande largura de banda
+
+Spread:
+
+Maior latência, menor largura de banda, porém menos suscetível a falhas.
+
+- Ao contrário do Cluster, no Spread queremos minimizar ao máximo a chance de falhas.
+- Nesse caso todas as instâncias estarão em diferentes hardwares.
+- As instâncias podem estar na mesma AZ ou em AZ diferentes mas sempre estarão em hardwares diferentes mesmo que estejam na mesma AZ.
+- Isso diminui o risco de falha pois, caso um hardware falhe dentro de um AZ, terá outro hardware dentro da AZ com outra instância. E caso uma AZ inteira falhe, terá outra AZ com outros hardwares com instâncias da aplicação.
+- É limitado a 7 instâncias por AZ por placement group
+- Utilizada em aplicações de precisam de maxima disponibilidade e aplicações críticas onde cada instância precisa estar isolada da falha de outra instância.
+
+Partition
+
+- São divididos em partições dentro de uma AZ e em cada partição pode haver várias instâncias
+- Cada partição é um rack de hardware dentro da AZ, dessa forma caso um rack falhe dentro da AZ, outro com outras instâncias ainda estará funcionando.
+- Limitado a 7 partições por AZ porém cada partição pode conter centenas de instâncias, diferentemente do Spread que é limitado a 7 instâncias por placement group.
+
+### Placement Groups na Prática
+
+Dentro do dashboard do EC, vá em 'Network and Security' e clique em 'Placement Group' e depois em 'Create placement group', depois escolha as opções do placement group.
+
+Para criar uma instância em um grupo, quando estiver criando a instância, em 'Advanced Details' terá uma opção para escolher o Placement Group daquela instância.
+
+### Elastic Network Interfaces (ENI)
+
+É um componente na VPC (Virtual Private Cloud) que representa um placa de rede virtual (virtual network card).
+
+São esses componentes que dão acesso a rede para as nossas instâncias, porém são utilizadas fora da instância em si. É possível adicionar mais do que 1 ENI em uma instância
+
+Cada ENI pode ter os seguintes atributos:
+
+- IPv4 privado primário e um ou mais IPv4 secundários
+- Um Elastic IP (IPv4) por cada IPv4 privado (caso uma instância tenha 2 ENI então ela poderá ter 2 IP privado, podendo assim ter 2 Elastic IP)
+- Um IPv4 público
+- Um ou mais security group
+- Um MAC address
+
+Os ENI podem ser criado independentes de instâncias e serem adicionados ou movidos a qualquer hora de uma instância para outra, dessa maneira movendo um IP privado de uma instância para outra.
+
+### Elastic Network Interfaces (ENI) na Prática
+
+Nos detalhes da instância, na aba 'Networking' temos a opção 'Network Interfaces'.
+
+Para configurar uma ENI, na dashboard do EC2, vá em 'Network and Security' e clique em 'Network Interfaces'.
+
+Depois de configurar uma ENI é possível vincular ela a uma instância e caso necessário, desvincular e vincular em outra instância.
+
+### EC2 Hibernate
+
+Sabemos que podemos parar e terminar instâncias do EC2
+
+- Stop: Os dados no disco (EBS) fica intacto no próximo start da instância
+- Terminate: Qualquer volume EBS configurado para ser destruído é perdido, porém volumes configurados para não serem destruídos no Terminate são mantidos.
+
+No start da instância:
+
+- Na primeira vez é feito o boot do OS e é executado o EC2 User Data Script
+- Nas outras vezes é somente feito o boot do OS (desde que a instância não seja terminada)
+
+No Hibernate:
+
+- O estado da RAM é preservado
+- Significa que o boot do OS será muito mais rápido pois o OS não é parado e nem reiniciado
+- O estado da ram é escrito em um arquivo no volume EBS.
+- É importante que o volume de armazenamento tenha espaço o suficiente para armazenar todo o tamanho da ram
+- Para permitir ECS Hibernate o EC2 Instance Root Volume deve ser do tipo EBS e deve ser encriptado.
