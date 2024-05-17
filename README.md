@@ -4,8 +4,32 @@
 
 - [Introdução](#casos-de-uso-dos-serviços-da-aws)
 - [Regiões](#regiões)
+  - [Como escolher uma região?](#como-escolher-uma-região)
+  - [Zonas de disponibilidade (Availability Zones)](#zonas-de-disponibilidade-availability-zones)
+  - [Pontos de presença (Points os presence (edge locations))](#pontos-de-presença-points-os-presence-edge-locations)
 - [IAM e AWS CLI](#iam-identity-and-access-management-e-aws-cli)
+  - [Por que queremos ou precisamos de criar grupos?](#por-que-queremos-ou-precisamos-de-criar-grupos)
+  - [Grupos e Usuários na Prática](#grupos-e-usuários-na-prática)
+  - [IAM Policies](#iam-policies)
+  - [IAM Policies na Prática](#iam-policies-na-prática)
+  - [IAM MFA (Password Policy)](#iam-mfa-password-policy)
+  - [Password Policy na Prática](#password-policy-na-prática)
+  - [Maneiras de acessar a AWS](#maneiras-de-acessar-a-aws)
+  - [AWS CLI](#aws-cli)
+  - [AWS SDK](#aws-sdk)
+  - [AWS CLI Na Prática](#aws-cli-na-prática)
+  - [IAM Roles (Funções) for Services](#iam-roles-funções-for-services)
+  - [IAM Roles Na Prática](#iam-roles-na-prática)
+  - [IAM Security Tools](#iam-security-tools)
+  - [IAM Security Tools Na Prática](#iam-security-tools-na-prática)
 - [Fundamentos EC2](#fundamentos-ec2)
+  - [EC2 Básico](#ec2-básico)
+  - [Subindo uma instância EC2 na Prática](#subindo-uma-instância-ec2-na-prática)
+  - [Tipos de Instâncias EC2](#tipos-de-instâncias-ec2)
+  - [Introdução a Grupo de Segurança/Firewall nas instâncias EC2](#introdução-a-grupo-de-segurançafirewall-nas-instâncias-ec2)
+  - [Grupos de Segurança na Prática](#grupos-de-segurança-na-prática)
+  - [Vinculando Roles em uma Instância EC2](#vinculando-roles-em-uma-instância-ec2)
+  - [Tipos de Pacotes EC2](#tipos-de-pacotes-ec2)
 
 ## Casos de uso dos serviços da AWS
 
@@ -252,6 +276,8 @@ Para criar uma chave de acesso basta ir no AWS Console:
 
 ### AWS CLI Na Prática
 
+Primeiramente instale a AWS CLI de acordo com seu sistema operacional
+
 Para configurar o AWS CLI siga os passos:
 
 - No terminal digite 'aws configure'
@@ -271,7 +297,7 @@ Dessa maneira podemos dar/criar uma IAM Role para o serviço para que ele possa 
 
 ### IAM Roles Na Prática
 
-No AWS Console, clique em Roles:
+No AWS Console no IAM Dashboard, clique em Roles:
 
 - Após isso irá aparecer a opção de criar uma role
 - Selecione o serviço e quais permissões você quer dar para o serviço
@@ -359,26 +385,26 @@ m: instance class
 
 2xLarge: tamanho da instância (quanto maior, mais cpu, ram, armazenamento etc)
 
-Tipo para Propósitos Gerais (General Purpose):
-Sáo boas para uma diversidade de casos como web servers e repositórios de código
-Possuem um bom balanço entre CPU, memória e rede
+- Tipo para Propósitos Gerais (General Purpose):
+  - São boas para uma diversidade de casos como web servers e repositórios de código
+  - Possuem um bom balanço entre CPU, memória e rede
 
-Tipo para Computação Otimizada (Compute Optimized):
-Sào boas para tarefas que precisam de um computação intensiva que precisa de processadores de alta performance
-Processamento de grande volume de dados (Batch processing)
-Web server de alta performance
-High performance computing (HPC)
-Machine Learning
-Servidores dedicados para jogos
+- Tipo para Computação Otimizada (Compute Optimized):
+  - São boas para tarefas que precisam de um computação intensiva que precisa de processadores de alta performance
+  - Processamento de grande volume de dados (Batch processing)
+  - Web server de alta performance
+  - High performance computing (HPC)
+  - Machine Learning
+  - Servidores dedicados para jogos
 
-Tipo com Memória Otimizada (Memory Optimized)
-Possuem uma grande performance para processar grandes volumes de dados na RAM
-Bancos de dados de alta performance
-Cache distribuído para web
-Banco em memória para BI
+- Tipo com Memória Otimizada (Memory Optimized)
+  - Possuem uma grande performance para processar grandes volumes de dados na RAM
+  - Bancos de dados de alta performance
+  - Cache distribuído para web
+  - Banco em memória para BI
 
-Tipo com Armazenamento Otimizado (Storage Optimized)
-Utilizado para tarefas que precisam de muitas escrita e leitura ou acessar um grande volume de dados no armazenamento
+- Tipo com Armazenamento Otimizado (Storage Optimized)
+  - Utilizado para tarefas que precisam de muitas escrita e leitura ou acessar um grande volume de dados no armazenamento
 
 ### Introdução a Grupo de Segurança/Firewall nas instâncias EC2
 
@@ -462,3 +488,39 @@ Exemplo:
 Caso tenhamos configurado uma regra de inbound para o protocolo http (porta 80) permitindo qualquer origem (0.0.0.0/0), conseguimos acessar o endereço da nossa instância através do navegador (protocolo http) de qualquer computador (qualquer origem)
 
 Lembrando que uma instância pode ter vários security groups e um security group pode estar ligado à várias instâncias
+
+### Vinculando Roles em uma Instância EC2
+
+No painel do EC2, clique na instância desejada, vá em 'Actions', depois em 'Security' e então em 'Modify IAM Role', escolha a Role desejada e depois em 'Update IAM Role'.
+
+Quando conectado na instância do EC2, via ssh ou EC2 connect, não é interessante utilizar o comando 'aws configure'e colocar nossas credenciais para acessar comandos da AWS CLI, pois qualquer pessoa da instituição pode conectar na instância e pegar essas informações que sào confidenciais.
+
+Para permitir o uso do AWS CLI na instância é precisa adicionar as permissões via Roles.
+
+Por exemplo, para executar o comando 'aws iam list-users' no instância é necessário criar uma role com a permissão 'IAMReadOnlyAccess' dessa maneira nossa instância terá a permissão para executar os comandos e envolvam leitura de dados do IAM.
+
+### Tipos de Pacotes EC2
+
+- On-Demand Instances
+  - Pague pelo tanto que está sendo usado
+  - Recommended for short-term and un-interrupted workloads, where you can't predict how the application will behave
+
+- EC2 Reserved Instances
+  - É possível reservar atributos específicos da instância (tipo, região, OS, por exemplo)
+  - Recommended for steady-state usage applications (databases por exemplo)
+  - É possível comprar e vender as instâncias no marketplace
+
+- Convertible Reserved Instance
+  - É uma opção de Reserved Instance onde é possível alterar o tipo da instância, família, OS e escopo
+
+- EC2 Spot Instance
+  - São instâncias mais baratas onde você define qual o preço máximo que quer ser pago por pela instância, porém se os preços subirem e ficarem maior do configurado, você perde acesso aquela instância.
+  - Por isso é recomendado para aplicações que são resilientes à falhas
+
+- EC2 Dedicated Hosts
+  - Um servidor físico dedicado com instância EC2 totalmente dedicado para o seu uso.
+  - Útil para casos de uso que envolvam requisitos de compliance
+
+- EC2 Dedicated Instance
+  - Possui uma instância dedicada em um hardware dedicado, mas pode ser que compartilhe o hardware com outros usuários
+  - A diferente comparando com o Dedicated Hosts, é que no Dedicated Hosts você tem acesso total ao servidor físico em sí.
