@@ -656,3 +656,23 @@ No Hibernate:
 - O estado da ram é escrito em um arquivo no volume EBS.
 - É importante que o volume de armazenamento tenha espaço o suficiente para armazenar todo o tamanho da ram
 - Para permitir ECS Hibernate o EC2 Instance Root Volume deve ser do tipo EBS e deve ser encriptado.
+
+## EC2 Instance Storage
+
+### Visão geral EBS
+
+EBS (Elastic Block Storage) Volume é um 'dispositivo' de armazenamento que é possível de vincular a alguma instância enquanto elas rodam.
+
+Permite as instâncias persistirem dados mesmo depois que elas forem terminadas, desse forma nos podemos destruir/terminar instâncias e criar outras novas utilizando o mesmo volume EBS das anteriores.
+
+Alguns EBS podem ser vinculados a varias instâncias, mas normalmente são vinculadas apenas a uma. E uma instância pode ter mais de um EBS.
+
+É vinculado ao AZ.
+
+São dispositivos de rede (não são dispositivos físicos), eles usam a rede para comunicar se comunicar com a instância, podem assim ter alguma latência.
+
+Por serem um dispositivo de rede, podem ser desvinculados de uma instância e vinculados em outra de forma rápida.
+
+Por se tratar de um volume é necessário provisionar a capacidade dele.
+
+Ao criar um volume EBS é possível configurar para que o EBS seja deletado quando a instância é terminada. O volume padrão (root) da instância é configurado para ser deletado ao terminar a instância por padrão, porém é possível configurar para ele não ser deletado. Os outros volumes EBS adicionado não são deletados por padrão ao terminar a instância.
