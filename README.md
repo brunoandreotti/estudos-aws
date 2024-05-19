@@ -1,4 +1,4 @@
-# AWS Solution Architect Estudos
+# AWS Estudos
 
 ## Sumário
 
@@ -38,6 +38,11 @@
   - [Elastic Network Interfaces (ENI)](#elastic-network-interfaces-eni)
   - [Elastic Network Interfaces (ENI) na Prática](#elastic-network-interfaces-eni-na-prática)
   - [EC2 Hibernate](#ec2-hibernate)
+- [EC2 Instance Storage](#ec2-instance-storage)
+  - [Visão geral EBS (Elastic Block Storage)](#visão-geral-ebs-elastic-block-storage)
+  - [Volumes EBS na Prática](#volumes-ebs-na-prática)
+  - [EBS Snapshots](#ebs-snapshots)
+  - [EBS Snapshots na Prática](#ebs-snapshot-na-prática)
 
 ## Casos de uso dos serviços da AWS
 
@@ -659,7 +664,9 @@ No Hibernate:
 
 ## EC2 Instance Storage
 
-### Visão geral EBS
+### Visão geral EBS (Elastic Block Storage)
+
+EBS é um serviço de armazenamento em blocos na nuvem, escalável e de alta performance projetado para o Elastic Compute Cloud (EC2).
 
 EBS (Elastic Block Storage) Volume é um 'dispositivo' de armazenamento que é possível de vincular a alguma instância enquanto elas rodam.
 
@@ -676,3 +683,46 @@ Por serem um dispositivo de rede, podem ser desvinculados de uma instância e vi
 Por se tratar de um volume é necessário provisionar a capacidade dele.
 
 Ao criar um volume EBS é possível configurar para que o EBS seja deletado quando a instância é terminada. O volume padrão (root) da instância é configurado para ser deletado ao terminar a instância por padrão, porém é possível configurar para ele não ser deletado. Os outros volumes EBS adicionado não são deletados por padrão ao terminar a instância.
+
+### Volumes EBS na Prática
+
+Ao entrar nos detalhes do sua instância EC2, na aba 'Storage'é possível visualizar os detalhes do armazenamento de sua instância.
+
+Para acessar os detalhes do EBS, no dashboard do EC2, vá em 'Elastic Block Store'.
+
+Para criar um novo volume, na aba 'Elastic Block Store', clique em 'Volumes' e depois em 'Create Volume'. É importante se atentar em criar o volume na mesma AZ da instância que você deseja vincular esse volume.
+
+Para vincular a uma instância, clique no volume, depois em 'Actions' e depois em 'Attach Volume'.
+
+Um volume EBS só estará disponível para vincular a uma instância se a instância e o volume estiverem na mesma AZ.
+
+### EBS Snapshots
+
+Com o EBS Snapshot é possível fazer um backup de um volume EBS a qualquer momento.
+
+Não é necessário desvincular o volume da instância para fazer o snapshot mas é recomendado.
+
+É possível copiar os snapshots entre AZs ou regiões.
+
+Características do EBS Snapshot
+
+- EBS Snapshot Archive
+  - É possível mover o snapshot para um 'nível' diferente do 'nível' padrão que ele é criado, esse nível é chamado de 'archive tier'
+  - Ele é mais barato que o nível padrão.
+  - É como se fosse uma alteração de formato do snapshot para que seja mais barato de armazenar ele, porém ele demora de 24 a 72 horas para ser restaurado, diferente no nível padrão que é instantâneo.
+
+- EBS Recycle Bin
+  - É possível configurar regras para que ao deletar um EBS Snapshot ele vá para uma lixeira ao invés de ser totalmente deletado, sendo possível ser recuperado, o tempo de retenção da lixeira pode ser definido em 1 dia e 1 ano.
+
+- Fast Snapshot Restore (FSR)
+  - Uma funcionalidade de forçar a inicialização total de um volume para que não haja latência para seu uso já de imediado, porém é um função que é bem cara.
+
+### EBS Snapshot na Prática
+
+Para criar um  snapshot, vá nos detalhes do EBS Volume, selecione o volume desejado, clique em 'Actions' e depois em 'Create Snapshot'
+
+Para visualizar os detalhes do snapshot clique em 'Snapshots' na aba 'Elastic Block Storage'.
+
+É possível copiar o snapshot para outra região selecionando a snapshot, clicando em 'Actions' e depois em 'Copy Snapshot'.
+
+Para criar um novo volume a partir do snapshot, clique em 'Actions' e depois em 'Create volume from snapshot'.
