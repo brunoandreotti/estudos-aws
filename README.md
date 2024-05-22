@@ -43,6 +43,12 @@
   - [Volumes EBS na Prática](#volumes-ebs-na-prática)
   - [EBS Snapshots](#ebs-snapshots)
   - [EBS Snapshots na Prática](#ebs-snapshot-na-prática)
+  - [AMI (Amazon Machine Image)](#ami-amazon-machine-image)
+  - [AMI (Amazon Machine Image) na Prática](#ami-amazon-machine-image-na-prática)
+  - [EC2 Instance Store](#ec2-instance-store)
+  - [Tipos de Volumes EBS](#tipos-de-volumes-ebs)
+  - [EBS Multi-Attach](#ebs-multi-attach)
+  - [EBS Encryption](#ebs-encryption)
 
 ## Casos de uso dos serviços da AWS
 
@@ -744,3 +750,147 @@ Para criar uma imagem, selecione a instância desejada, clique em 'actions' e de
 Para ver a lista de imagens disponíveis, no dashboard de EC2, clique em 'images' e depois em 'IMAs'
 
 Após a imagem ser gerada será possível criar instâncias utilizando a imagem.
+
+### EC2 Instance Store
+
+Volumes EBS são drivers de rede com boa performance porém limitada. Por isso caso necessite de uma disco de armazenamento de alta performance, é recomendado utilizar EC2 Instance Store.
+
+Em alguns tipos de instâncias é possível utilizar um armazenamento por hardware, utilizando o hd/ssd que está fisicamente no servidor.
+
+Casos de uso:
+
+- Melhor performance de leitura e escrita (I/O)
+- EC2 Instance Store perde os dados armazenados se ele é parado/terminado, então é recomendado para uso de dados que não serão necessários a longo prazo (buffer, cache, conteúdo temporário)
+- Risco de perder dados caso a hardware falhe
+- Replicações e backups ficam na sua responsabilidade.
+
+### Tipos de Volumes EBS
+
+Volumes EBS podem ser de 6 tipos:
+
+- gp2/gp3 (SSD): SSD com propósitos gerais, bom balanço entre preço e performance para uma grande variedade de aplicações.
+- io1/io2 Block Express (SSD): SSD é altíssima performance para aplicações criticas e que necessitam de baixa latência ou alta taxas de transferência.
+- st 1 (HDD): HD de baixo custo para aplicações frequentemente acessadas e com taxa de transferência intensas.
+- sc 1 (HDD): HD com o custo mais baixo possível para aplicações pouco acessadas.
+
+Como definir qual EBS utilizar:
+
+- Vai depender do tipo de aplicação que será utilizada, os volumes EBS podem ser definidos por tamanho, taxa de transferência, escrita/leitura por segundo (IOPS I/O Ops Per Sec).
+
+Somente gp2/gp3 e io1/io2 Block Express podem ser utilizadas como volume de boot.
+
+Casos de uso para os tipos de volume
+
+SSD de uso geral (gp2/gp3)
+
+- Armazenamento custo-beneficio, baixa latência.
+- Pode ser utilizado para volume de boot, virtual desktops, ambiente de desenvolvimento e teste.
+- Tamanho pode variar de 1 gigabyte até 16 terabyte
+- Características gp3.
+  - Base de 3000 IOPS e taxa de transferência de 100 megabytes/seg
+  - Pode aumentar o IOPS até 16000 e a taxa de transferência até 1000 megabytes/seg independentemente.
+- Características gp2
+  - Volumes pequenos gp2 podem chegar até 3000 IOPS.
+  - Tamanho do volume e IOPS são conectados, podendo chegar até 16000 IOPS, ou seja, quanto maior o volume, maior o IOPS, sendo a taxa de 3 IOPS por giga de tamanho.
+  
+SSD Provisionado para IOPS
+
+- Utilizado para aplicações criticas que necessitam de ótima performance de IOPS ou aplicações que necessitam de mais do que 16000 IOPS.
+- Bom para aplicações de banco de dados
+- io 1 (4gb - 16tb)
+  - Máximo de 64000 IOPS para Nitro EC2 Instances e 32000 para outras.
+  - Pode aumentar o IOPS independentemente do tamanho do armazenamento.
+- io2 (4gb - 64tb)
+  - Latência extremamente rápida.
+  - IOPS máximo de 256000.
+  - Suporta EBS Multi-attach.
+
+HDD
+
+- Não podem ser utilizados como volume de boot.
+- 125gb até 16tb.
+- st1 (HD otimizado para taxa de transferência)
+  - Bom para big data, armazém de dados, processamento de logs.
+  - Taxa de transferência máxima de 500 mb/s e máximo de 500 IOPS
+- st2.
+  - Utilizado para dados que não são frequentemente acessados.
+  - Bom para quando o menor custo é importante.
+  - Taxa de transferência máxima de 250 mb/s e máximo de 250 IOPS.
+
+### EBS Multi-Attach
+
+Somente está disponível nas famílias io1 e io2 de volume EBS.
+
+Permite vincular o mesmo volume EBS em várias instâncias EC2 na mesma AZ.
+
+Cada instancia terá permissão completa para leitura e escrita.
+
+Casos de uso
+
+- Alcançar uma disponibilidade muito alta em aplicações com cluster em Linux.
+
+Máximo de 16 instâncias EC2 de uma vez.
+
+### EBS Encryption
+
+Ao criar um volume EBS encriptado temos o seguinte:
+
+- Dados são encriptados dentro do volume
+- Todos os dados transitados entre a instância e o volume são encriptados
+- Todos os snapshots são encriptados
+- Todos os volumes criados a partir do snapshot também são encriptados
+
+Todo o processo de encriptar e tirar a criptografia é feito de baixo doa panos pelo EBS
+
+Tem um impacto mínimo na latência
+Utiliza chaves do KSM (AES-256)
+Copiar um snapshot não encriptado permite poder encriptar ele
+
+### Amazon Elastic File System (EFS)
+
+É um NFS (network file system) gerenciado que pode ser colocado em vários tipos de EC2
+
+EFS trabalha com instâncias EC2 em múltiplas AZs.
+
+Altamente disponível e escalável, muito caro (3x o custo do gp2), pago por uso.
+
+Com ele é possível conectar instâncias em diferentes AZ pelo mesmo NFS utilizando EFS.
+
+Casos de uso: gerenciamento de conteúdo, web serving, compartilhamento de dados.
+Usa o protocolo NFSv4.1.
+
+Utiliza grupos de segurança para controlar acesso ao EFS.
+
+Somente compatível com AMI baseada em Linux.
+
+Possível encriptar utilizando KMS.
+
+A file system escala automaticamente e é pago por uso.
+
+Classes de EFS:
+
+- EFS Scale
+  - Aceita milhares de acessos ao mesmo tempo, mais de 10gb/s de taxa de transferência.
+  - Cresça para um NFS de escalas de petabytes  automaticamente
+- Performance Mode (configurado no momento de criação do EFS)
+  - Propósitos gerais (padrão): Para casos de uso que a latência importa
+  - Máximo I/O: maior latência porém maior taxa de transferência
+- Throughput Mode
+  - Bursting
+  - Provisionado: Configura a taxa de transferência sem se importar com o tamanho do armazenamento.
+  - Elastic: Escala a taxa de transferência baseado no volume de dados automaticamente.
+
+Classes de armazenamento EFS
+
+Storage Tiers (Gerenciamento de ciclo de vida - mova arquivos depois de X dias)
+
+- Standard: para arquivos frequentemente acessados
+- Infrequent access: Custa para recuperar arquivos, porém menor preço para armazenar
+- Archive: dados raramente acessados, custa 50% menos.
+
+Para configurar o tempo que os arquivos demorar para ir de uma estado de armazenamento para o outro é possível utilizar políticas de ciclo de vida.
+
+Disponibilidade e durabilidade:
+
+- Standard: Multi-AZ, bom para prod
+- One Zone: Uma AZ, bom para desenvolvimento, backup e compatível com IA (EFS One Zone IA).
