@@ -726,3 +726,21 @@ Para visualizar os detalhes do snapshot clique em 'Snapshots' na aba 'Elastic Bl
 É possível copiar o snapshot para outra região selecionando a snapshot, clicando em 'Actions' e depois em 'Copy Snapshot'.
 
 Para criar um novo volume a partir do snapshot, clique em 'Actions' e depois em 'Create volume from snapshot'.
+
+### AMI (Amazon Machine Image)
+
+- AMI são imagens para a customização da um instância EC2.
+  - É possível adicionar os próprios softwares, configurações, OS, monitoramento e etc.
+  - Com isso é possível ter um tempo de boot e configuração mais rápido pois todos os softwares que iríamos instalar na instância já estão pré-empacotados na imagem.
+
+As imagens são criadas para uma região específica e podem ser copiadas para outras regiões.
+
+Então para iniciar uma instância ECS temos 3 opções, utilizar uma imagem publica disponibilizada pela Amazon ou utilizar uma imagem montada, mas dessa forma nós mesmos somos responsáveis por manter a imagem segura e atualizada ou ainda uma imagem montada por outra pessoa que está disponível no marketplace.
+
+### AMI (Amazon Machine Image) na Prática
+
+Para criar uma imagem, selecione a instância desejada, clique em 'actions' e depois em 'image and templates' e em seguida em 'create image'.
+
+Para ver a lista de imagens disponíveis, no dashboard de EC2, clique em 'images' e depois em 'IMAs'
+
+Após a imagem ser gerada será possível criar instâncias utilizando a imagem.
