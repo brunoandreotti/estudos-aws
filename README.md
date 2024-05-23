@@ -49,6 +49,8 @@
   - [Tipos de Volumes EBS](#tipos-de-volumes-ebs)
   - [EBS Multi-Attach](#ebs-multi-attach)
   - [EBS Encryption](#ebs-encryption)
+  - [Amazon Elastic File System (EFS)](#amazon-elastic-file-system-efs)
+  - [EBS x EFS](#ebs-x-efs)
 
 ## Casos de uso dos serviços da AWS
 
@@ -894,3 +896,32 @@ Disponibilidade e durabilidade:
 
 - Standard: Multi-AZ, bom para prod
 - One Zone: Uma AZ, bom para desenvolvimento, backup e compatível com IA (EFS One Zone IA).
+
+### EBS x EFS
+
+EBS volumes:
+
+- Uma instância (exceto multi-attach io1/io2)
+- São específicos de AZ
+- gp2: IO aumenta de acordo com o tamanho do disco
+- gp3 e io1: IO pode aumentar independentemente do tamanho do disco
+- Para migrar um EBS entre AZ
+  - Faz um Snapshot do volume EBS
+  - Copia para a outra AZ
+  - Cria um volume a partir do Snapshot
+  - Vincula o volume a uma instância
+- O volume root do EBS de uma instância é deletado por padrão caso a instância EC2 seja terminada (é possível alterar esse comportamento)
+
+EFS:
+
+- É um network file system
+- Pode ser vinculado a centenas de instâncias em diferentes AZs
+- Somente para instâncias com Linux pois utiliza o sistema POSIX
+- Possui um preço mais elevado do que o EBS
+- Possui Storage Tier para os arquivos, dependendo da frequência que são acessados para diminuir custos
+
+EFS: File System
+
+EBS: Dispositivo de armazenamento na rede
+
+Instance Store: Dispositivo físico de armazenamento no servidor
