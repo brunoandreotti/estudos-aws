@@ -845,8 +845,17 @@ Ao criar um volume EBS encriptado temos o seguinte:
 Todo o processo de encriptar e tirar a criptografia é feito de baixo doa panos pelo EBS
 
 Tem um impacto mínimo na latência
+
 Utiliza chaves do KSM (AES-256)
+
 Copiar um snapshot não encriptado permite poder encriptar ele
+
+Para encriptar um EBS não encriptado que já esta vinculado a uma instância EC2:
+
+- Crie um snapshot do volume EBS
+- Copie o snapshot e marque a opção de encriptar o snapshot copiado
+- Use o snapshot encriptado para criar um novo volume EBS encriptado
+- Vincule o novo volume EBS encriptado na instância desejada
 
 ### Amazon Elastic File System (EFS)
 
@@ -925,3 +934,31 @@ EFS: File System
 EBS: Dispositivo de armazenamento na rede
 
 Instance Store: Dispositivo físico de armazenamento no servidor
+
+## Escalabilidade e Alta Disponibilidade - ELB e ASG
+
+Escalabilidade significa que a sua aplicação consegue lidar com alto volume de carga se adaptando dependendo do cenário
+
+Existem dois tipos de escalabilidade:
+
+Vertical
+
+- Significa a necessidade de aumentar o tamanho da instância
+- Por exemplo uma aplicação que roda em um t2.micro e vemos a necessidade de escalar ela para rodar em um t2.large
+- Comum ser usado em sistemas não distribuídos, por exemplo banco de dados
+- RDS e ElastiCache são serviços que podem ser escalados verticalmente
+- Existe uma limitação do quanto é possível escalar verticalmente e está ligado a uma limitação de hardware
+
+Horizontal (elasticidade)
+
+- Significa aumentar o número de instâncias da sua aplicação
+- Escalabilidade horizontal normalmente significa o uso de sistemas distribuídos
+- É fácil de ser realizado com instâncias EC2
+
+Alta disponibilidade normalmente anda junto com escalabilidade horizontal, significa rodar sua aplicação em pelo menos 2 data centers (AZs) diferentes
+
+O principal motivo é para sobreviver a uma perda de data center
+
+Pode ser alta disponibilidade passiva (RDS Multi AZ, por exemplo)
+
+Pode ser alta disponibilidade ativa (escalabilidade horizontal)
