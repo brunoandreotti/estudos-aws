@@ -962,3 +962,50 @@ O principal motivo é para sobreviver a uma perda de data center
 Pode ser alta disponibilidade passiva (RDS Multi AZ, por exemplo)
 
 Pode ser alta disponibilidade ativa (escalabilidade horizontal)
+
+### Elastic Load Balancer (ELB)
+
+Load balancers são servidores que vão encaminhar o tráfego para vários servidores (EC2, por exemplo).
+
+Vantagens:
+
+- Distribuir a carga entre várias instâncias
+- Expor apenas um ponto de acesso (DNS) na sua aplicação
+- Lidar com falhas nas instâncias
+- Disponibilizar HTTPS
+- Separar trafego público do privado
+
+Elastic Load balance é um load balancer gerenciado pela AWS
+
+- Garantia de funcionamento
+- AWS cuida de upgrades, atualizações, manutenção e etc
+- AWS disponibilizado apenas algumas opções de alteração
+
+Irá custar menos que configurar o próprio load balancer se será menos trabalhoso de manter e escalar
+
+É integrado com vários sistemas e serviços da AWS (EC2, ECS, CloudWatch e etc)
+
+Health Checks é uma maneira do load balancer verificar a saúde de uma instância, caso aquela instância esteja com algum problema o load ba1lancer não irá jogar requisições para aquela instâncias em específico.
+
+Normalmente é feito utilizando uma rota e uma porta específicas
+
+Tipos de Load Balancer na AWS
+
+- Classic Load Balancer (v1 - geração velha) - 2009 - CLB
+  - suporta HTTP, HTTPS, TCP, SSL
+  - Por ser antigo, a AWS não recomenda utiliza-lo, será mostrado como depreciado, porém ainda disponível para uso
+
+- Application Load Balancer (v2 - geração nova) - 2016 - ALB
+  - suporta HTTP, HTTPS, WebSocket
+
+- Network Load Balancer (v2 - gera;cão nova) - 2017 - NLB
+  - suporta T P, TLS (secure TCP), UDC
+
+- Gateway Load Balancer - 2020 - GWLB
+  - Opera na camada 3 (camada de rede) - IP Protocolo
+
+É recomendado o uso das versões mais novas do LB pois ele possui mais funcionalidades
+
+Alguns LBs podem ser configurados como internos ou externos
+
+Ao usar um LB, vamos permitir que todas as requisições http e https sejam feitas para o load balancer, porém para acessar nossa aplicação/instância iremos permitir apenas as requisições do LB, basicamente vamos fazer o link do security group da instância com o security group do LB, dessa forma informando que a instância só aceitara tráfegos vindos do LB
