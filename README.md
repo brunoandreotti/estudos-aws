@@ -1093,3 +1093,25 @@ Para isso:
 
 - Nos detalhes do LB desejado, vá na aba Listeners and rules e clique na regra desejada
 - Aqui podemos criar novas regras para o LB por exemplo redirecionar baseado no host, path, query strings, headers, método http e etc
+
+### Network Load Balancer (NLB)
+
+- Permite o load balance de requisições TCP e UDP para as instâncias
+- Consegue lidar com milhões de requisições por segundo
+- Menor latência (100 ms vs 400 ms do ALB)
+
+NLB possui um IP estático por AZ e suporta Elastic IP
+
+Ao falar que a aplicação só pode ser acessada por um, dois ou três IPs específicos, podemos já pensar em NLB
+
+Utilizado para performance extrema
+
+O funcionamento é parecido com ALB, nos criamos Target groups que receberão o redirecionamento do LB e configuramos TCP + Regras para que o LB possa ser acessado
+
+No caso de NLB os Target Groups serão instâncias EC2 e IPs privados (para servidores on-premises por exemplo)
+
+Os target groups podem ser formados pelos 2 tipos de tecnologias ao mesmo tempo
+
+Também é possível colocar para o NLB redirecionar a requisição para um NLB
+
+Os Heath Checks suportam os protocolos TCP, HTTP e HTTPS
