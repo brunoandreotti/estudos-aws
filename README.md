@@ -51,7 +51,11 @@
   - [EBS Encryption](#ebs-encryption)
   - [Amazon Elastic File System (EFS)](#amazon-elastic-file-system-efs)
   - [EBS x EFS](#ebs-x-efs)
-
+- [Escalabilidade e Alta Disponibilidade - ELB e ASG](#escalabilidade-e-alta-disponibilidade---elb-e-asg)
+  - [Elastic Load Balancer (ELB)](#elastic-load-balancer-elb)
+  - [Application Load Balancer - ALB](#application-load-balancer---alb)
+  - [Application Load Balancer na Prática](#application-load-balancer-na-prática)
+  
 ## Casos de uso dos serviços da AWS
 
 - Permite criar aplicações escaláveis e sofisticadas
@@ -993,7 +997,7 @@ Tipos de Load Balancer na AWS
 
 - Classic Load Balancer (v1 - geração velha) - 2009 - CLB
   - suporta HTTP, HTTPS, TCP, SSL
-  - Por ser antigo, a AWS não recomenda utiliza-lo, será mostrado como depreciado, porém ainda disponível para uso
+  - Por ser antigo, a AWS não recomenda utiliza-lo, será mostrado como depreciado.
 
 - Application Load Balancer (v2 - geração nova) - 2016 - ALB
   - suporta HTTP, HTTPS, WebSocket
@@ -1009,3 +1013,83 @@ Tipos de Load Balancer na AWS
 Alguns LBs podem ser configurados como internos ou externos
 
 Ao usar um LB, vamos permitir que todas as requisições http e https sejam feitas para o load balancer, porém para acessar nossa aplicação/instância iremos permitir apenas as requisições do LB, basicamente vamos fazer o link do security group da instância com o security group do LB, dessa forma informando que a instância só aceitara tráfegos vindos do LB
+
+### Application Load Balancer - ALB
+
+Application load balancer faz o load balancer de aplicações http entra máquinas que são agrupadas em target groups
+
+Permite fazer o LB de várias aplicações na mesma máquina (mesma instância EC2)
+
+Suporte para HTTP/2 e WebSockets
+
+Suporta redirecionamento (de HTTP para HTTPS por exemplo)
+
+É possível redirecionar diferentes URLS para diferentes target groups (exemplo.com/user e exemplo.com/posts sendo redirecionados para target groups diferentes)
+
+É possível redirecionar diferentes host names para diferentes target groups (um.exemplo.com e dois.exemplo.com sendo redirecionados para target groups diferentes)
+
+Também é possível fazer redirecionamento para diferentes target groups baseado na Query String e nos Headers da requisição
+
+ALB é útil quando usamos microsserviços e aplicações container-based (Docker e Amazon ECS, por exemplo) pois possui uma funcionalidade de mapeamento de portas para redirecionar para uma porta dinâmica no ECS
+
+É útil pois consegue fazer o load balance para diferentes aplicações, por exemplo:
+
+- Rota /users
+  - É redirecionada para o target group que roda o microsserviço de usuários
+
+- Rota /search
+  - É redirecionada para o target group que roda o microsserviço de busca
+
+Target groups podem ser:
+
+- Instâncias EC2 (que podem ser gerenciadas por um Auto Scaling Group) - HTTP
+- ECS tasks (gerenciados pelo próprio ECS) - HTTP
+- Lambda Functions - A request HTTP é traduzida em um evento JSON
+- Endereços de IP - precisam ser IPs privados (por exemplo de servidores on-premises)
+
+ALB pode fazer o roteamento para vários target groups e o Health check é feito a nível de target group
+
+Outro exemplo:
+
+- Request com query string ?Platform=Mobile
+  - É redirecionado para um target group baseado em instâncias EC2
+
+- Request com query string ?Platform=Desktop
+  - É redirecionado para um target group baseado em servidores on-premises utilizando IP privado
+
+Dessa maneira podemos fazer o redirecionamento de diferentes requisições para diferentes target groups baseados em diferentes tecnologias
+
+Bom saber:
+
+- Possui host name fixo (XXX.region.elb.amazonaws.com)
+- Os servidores da aplicação não olham o IP doi cliente diretamente, o IP verdadeiro do cliente é inserido no header X-Forwarded-For
+- Dessa maneira também podemos acessar a port (X-Forwarded-Port) e o protocolo (X-Forwarded-Proto)
+
+Client IP (12.34.56.78) -> LB <-> LB IP (Private IP) <-> Instância EC2
+
+Dessa maneira a aplicação não recebe a requisição direto do IP do cliente mas sim do IP privado do LB, quem recebe a requisição com o IP do cliente é o LB
+
+### Application Load Balancer na Prática
+
+- Crie 2 instâncias EC2
+- No dashboard do EC2, vá até a aba 'Load Balancing' e entre em 'Load Balancers' e depois em 'Create Load Balancer'
+- Faça as configurações do load balancer (Security Group, AZs, Target Groups)
+- Após isso o LB será criado e será disponibilizado um endereço DNS para acessar o load balancer
+- Com isso o LB já estará fazendo o balanceamento de acordo com o target group
+
+Por questões de segurança é interessante termos acesso às nossas instâncias somente através no LB e não através do próprio endereço da instância
+
+Para configurar isso podemos:
+
+- Ir em Security Groups
+- Selecionar o Security Groups da instância desejada
+- Configurar as Inbound Rules para que acessos HTTP/HTTPS sejam feito somente pelo IP do LB e para isso basta adicionar que aceitará requisições somente do Security Group vinculado ao LB
+
+Dessa maneira não conseguiremos acessar mais as instâncias diretamente pelo endereço delas e sim somente pelo endereço do LB
+
+Também é possível configurar Listener Rules para o LB, para definir para onde o LB irá redirecionar as requisições.
+
+Para isso:
+
+- Nos detalhes do LB desejado, vá na aba Listeners and rules e clique na regra desejada
+- Aqui podemos criar novas regras para o LB por exemplo redirecionar baseado no host, path, query strings, headers, método http e etc
