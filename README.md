@@ -55,6 +55,11 @@
   - [Elastic Load Balancer (ELB)](#elastic-load-balancer-elb)
   - [Application Load Balancer - ALB](#application-load-balancer---alb)
   - [Application Load Balancer na Prática](#application-load-balancer-na-prática)
+  - [Network Load Balancer (NLB)](#network-load-balancer-nlb)
+  - [Gateway Load Balancer (GWLB)](#gateway-load-balancer-gwlb)
+  - [Elastic Load Balancer - ELB - Sticky Sessions (Session Affinity)](#elastic-load-balancer---elb---sticky-sessions-session-affinity)
+  - [Balanceamento entre Zonas](#balanceamento-entre-zonas)
+  = [Certificados SSL](#certificados-ssl)
   
 ## Casos de uso dos serviços da AWS
 
@@ -1002,7 +1007,7 @@ Tipos de Load Balancer na AWS
 - Application Load Balancer (v2 - geração nova) - 2016 - ALB
   - suporta HTTP, HTTPS, WebSocket
 
-- Network Load Balancer (v2 - gera;cão nova) - 2017 - NLB
+- Network Load Balancer (v2 - geração nova) - 2017 - NLB
   - suporta T P, TLS (secure TCP), UDC
 
 - Gateway Load Balancer - 2020 - GWLB
@@ -1115,3 +1120,202 @@ Os target groups podem ser formados pelos 2 tipos de tecnologias ao mesmo tempo
 Também é possível colocar para o NLB redirecionar a requisição para um NLB
 
 Os Heath Checks suportam os protocolos TCP, HTTP e HTTPS
+
+### Gateway Load Balancer (GWLB)
+
+É utilizado para deploy, escalar e gerenciar processos de aplicações de rede virtual na AWS de terceiros (3rd party), por exemplo, Firewalls, sistemas de prevenção e detecção de intrusos e etc.
+
+É feito em nível de tráfego de rede.
+
+Users -> Traffic -> GWLB -> Target Group (aplicação/servidores de terceiros) -> GWLB -> Application.
+
+Dessa maneira podemos ver que o tráfego de rede do usuário é enviado primeiro para o GWLB depois o GWLB envia o tráfego para o Targe Group de terceiros para ser feita as validações/processos necessários, depois o resposta é retornada para o GWLB que é encarregado de enviar a resposta para a aplicação final.
+
+Utiliza o protocolo GENEVE na porta 6081
+
+Target Groups:
+
+- Instâncias EC2
+- Endereços de IP (precisam ser IPs privados)
+
+### Elastic Load Balancer - ELB - Sticky Sessions (Session Affinity)
+
+É possível implementar uma afinidade para que o mesmo cliente sempre seja redirecionado para a mesma instância por trás do LB
+
+É possível implementar isso no Classic Load Balancer, Application Load Balancer e Network Load Balancer
+
+Funciona utilizando um 'cookie'para informar para qual instância a requisição será redirecionada e possui uma data de expiração que pode ser configurada. Quando expirada as requisições voltam a ser enviadas para as diversas instâncias atrás do LB.
+
+Caso de uso:
+
+- Ter certeza que o usuário não irá perder os dados da sessão, uma vez que estará sempre conectado ao mesmo servidor/instância.
+
+Porém ao ativar essa funcionalidade é possível que ocorra um desbalanceamento de carga.
+
+Cookies:
+
+- Cookie baseado na aplicação
+  - Cookie Customizado
+    - Gerado pelo target
+    - Pode conter qualquer atributo customizado requerido pela aplicação
+    - O nome do cookie precisa ser especificado individualmente para cada target group.
+    - Não são permitidos os seguintes nomes : AWSALB, AWSALBAPP ou AWSALBTG pois são nomes reservados para o ELB.
+  - Cookie de aplicação
+    - Gerado pelo LB.
+    - Possui o nome AWSALBAPP.
+- Cookie baseado na duração
+  - Gerado pelo LB.
+  - Nome do cookie é AWSALB para o ALB e AWSELB para o CLB.
+
+Para configurar o Sticky Session, vá na aba Target Groups e selecione o Target Group desejado, logo em seguida clique em 'Actions' e depois em 'Edit attributes'.
+
+No final dos atributos marque a opção 'Stickiness' e escolha o tipo do cookie.
+
+### Balanceamento entre Zonas
+
+Com o Balanceamento entre Zonas, o balanceamento entre diferentes AZs com diferentes instâncias da mesma aplicação é feito para que cada instância fique com a mesma quantidade de carga de trabalhado, independentemente da quantidade instância que a AZ possui.
+
+Exemplo:
+
+- AZ1 -> Possui 2 instâncias
+
+- AZ2 -> Possui 8 instâncias
+
+O LB irá dividir de maneira que cada instância fique com 10% de carga por instância (100% de carga / 10 instâncias).
+
+O mesmo exemplo mas sem utilizar o Balanceamento entre Zonas, o load balancer divide igualmente a carga de trabalhando entre as AZ a depender do quantidade de Azs.
+
+Nesse caso por termos 2 AZs cada AZ ficaria com 50% da carga de trabalho, dessa maneira:
+
+- AZ1 -> 50% da carga -> Possui 2 instâncias -> 25% pra cada instância
+
+- AZ2 -> 50% da carga ->  Possui 8 instâncias -> 6.25% pra cada instância
+
+ALB:
+
+- Ativado o balanceamento por zonas por padrão sendo possível desativar a nível de Target Group.
+- Por ser ativado por padrão não há cobrança a mais se os dados forem transitados de umas AZ para outra para fazer o balanceamento entre zonas.
+
+NLB/GWLB:
+
+- Desativado por padrão.
+- Caso ativado será cobrado a mais caso os dados transitem de uma AZ para outra para fazer o balanceamento entre zonas.
+
+CLB:
+
+- Desativado por padrão.
+- Sem custos a mais caso seja ativado.
+
+Para ativar vá até os detalhes do LB desejado, depois em editar atributos e ative a opção 'Cross-zone load balancing'.
+
+Para desativar no caso do ALB é necessário ir até o Target Group e desativar.
+
+### Certificados SSL
+
+Certificado SSL permite que os dados enviados entre o cliente e o LB sejam encriptados.
+
+SSL significa Secure Sockets Layer e é utilizado para encriptar conexões.
+
+TLS é a versão nova do SSL que significa Transport Layer Security.
+
+Atualmente o certificado mais utilizado é o TLS mas é comumente referido ainda como SSL.
+
+Os certificados SSL públicos são expedidos por Certificate Authorities (CA).
+
+Utilizando esse SSL público no nosso LB será possível encriptar a conexão entre o cliente e o LB.
+
+Certificados SSL possuem datas de expiração e precisam ser renovados para ter certeza que o certificado é autêntico.
+
+Como funciona o certificado SSL no LB:
+
+Users -> HTTPS -> LB -> HTTP -> EC2
+
+A requisição entre o cliente e o LB é encriptada utilizando o protocolo HTTPS, porém na hora que chega no LB é desfeita a encriptação para que o LB se comunique com a instância através do protocolo HTTP, uma vez que essa comunicação é feita em uma rede privada.
+
+- o LB usa um certificado X.509 (SSL/TLS server certificate)
+- É possível gerenciar as certificados utilizando ACM (AWS Certificate Manager)
+- É possível criar e fazer o upload dos próprios certificados
+- HTTPS Listeners:
+  - É obrigatório especificar um certificado padrão
+  - É possível adicionar uma lista de certificados para suportar múltiplos domínios
+  - Cliente posem utilizar SNI (Server Name Indicator) para especificar qual hostname eles acessam
+  - É possível configurar uma política de segurança para suportar versões antigas/legado do SSL/TLS
+
+SNI (Server Name Indicator):
+
+- SNI resolve o problema de carregar múltiplos certificados SSL em um web server (para servir vários web sites)
+- É um protocolo novo e requer que o cliente indique qual o hostname do servidor que ele quer se comunicar no inicio da comunicação do SSL.
+- Dessa forma o servidor irá encontrar o certificado correto ou retornar o certificado padrão
+- Somente funciona com ALB e NLB e CloudFront
+
+Ao pensar em múltiplos SSL em um LB, pensa em ALB ou NLB pois são eles que suportam o SNI.
+
+### Connection Draining/Deregistration Delay
+
+Para o CLB o nome é Connection Draining e para ALB e NLB é Deregistration Delay
+
+Consiste em um tempo 'dado' para as requisições que ainda estão acontecendo 'esperarem' enquanto uma instância não está funcionando corretamente, enquanto isto está ocorrendo a instância é sinalizada com o estado de 'draining'.
+
+Enquanto uma instância está nesse estado de draining, o LB não fará novas requisições para essa instância.
+
+O tempo de draining pode ser configurado entre 1 e 3600 segundos (padrão é 300 segundos) ou 0 para desativado.
+
+### Auto Scaling Group (ASG)
+
+O objetivo do ASG é:
+
+- Scale out (adicionar instâncias EC@) para corresponder o aumento de carga
+- Scale in (remover instâncias EC2) para corresponder a diminuição de carga
+- É possível garantir que teremos um número mínimo e máximo de instâncias rodando no nosso ASG
+- Também é possível registrar novas instâncias EC2 automaticamente no LB com o ASG
+- Recriar uma instância EC2 caso uma anterior seja terminada
+
+O ASG em sí não tem custos, mas será cobrado todo o serviço e recursos utilizado pelo ASG
+
+Podemos configurar:
+
+- Capacidade mínima: O mínimo de instâncias que queremos no ASG
+- Capacidade desejada: A quantidade de instâncias que queremos rodando
+- Capacidade máxima: o máximo de instâncias que queremos no ASG
+
+O LB pode fazer o Health Check das instâncias que estão no ASG e caso uma não esteja saudável ele informa para o ASG para que o ASG termine/recrie a instância.
+
+Atributos para criar um ASG:
+
+- Launch Template: Contem as informações de como o ASG deve iniciar novas instâncias dentro do grupo
+  - AMI + Tipo da instância
+  - EC2 User Data
+  - Volumes EBS
+  - Security Groups
+  - SSH Key Pair
+  - IAM Roles para as instâncias EC2
+  - Network + Subnet info
+  - LB info
+- Tamanho máximo/mínimo e capacidade inicial
+- Políticas de escalonamento (Scaling Policies)
+
+É possível escalar um ASG baseado em alarmes do CloudWatch
+
+### Scaling Policies
+
+- Dynamic Scaling
+  - Target Tracking Scale
+    - Simple to set-up
+    - Exemplo: Preciso que o uso médio de CPU do grupo (ASG) fique em 40%, dessa maneira o ASG vai adicionar ou retirar instâncias para manter a utilização de CPU perto dos 40%
+  - Simple/Step Scaling
+    - Adicionar ou remover instâncias baseados em alertar do CloudWatch
+
+- Scheduled Scaling
+  - Antecipar o escalonamento baseado em métricas já conhecidas
+  - Exemplo: Todo dia na hora de pico (11:00 até 13:00) de usuários aumentar a quantidade de instâncias
+
+- Predictive Scaling
+  - Fica prevendo continuamente o uso e agenda um escalonamento para o futuro
+
+Métricas mais utilizadas:
+
+- CPUUtilization: Utilização de CPU média entre as instâncias do grupo (ASG)
+- RequestCountPerTarget: Garantir que a número de requisições para as instâncias EC2 fiquem estáveis
+- Average Network In / Out
+
+Também existe o 'cooldown period' e ocorre logo após um evento de escalonamento acontecer. O ASG não irá criar e nem terminar instâncias durante um certo intervalo de tempo (padrão 300 segundos) com o intuito de esperar as métricas se estabilizarem e ver se o escalonamento teve efeito.
