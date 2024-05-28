@@ -59,8 +59,12 @@
   - [Gateway Load Balancer (GWLB)](#gateway-load-balancer-gwlb)
   - [Elastic Load Balancer - ELB - Sticky Sessions (Session Affinity)](#elastic-load-balancer---elb---sticky-sessions-session-affinity)
   - [Balanceamento entre Zonas](#balanceamento-entre-zonas)
-  = [Certificados SSL](#certificados-ssl)
-  
+  - [Certificados SSL](#certificados-ssl)
+  - [Connection Draining/Deregistration Delay](#connection-drainingderegistration-delay)
+  - [Auto Scaling Group (ASG)](#auto-scaling-group-asg)
+  - [Scaling Policies](#scaling-policies)
+- [Amazon RDS (Relational Database Service)](#amazon-rds-relational-database-service)
+
 ## Casos de uso dos serviços da AWS
 
 - Permite criar aplicações escaláveis e sofisticadas
@@ -1319,3 +1323,32 @@ Métricas mais utilizadas:
 - Average Network In / Out
 
 Também existe o 'cooldown period' e ocorre logo após um evento de escalonamento acontecer. O ASG não irá criar e nem terminar instâncias durante um certo intervalo de tempo (padrão 300 segundos) com o intuito de esperar as métricas se estabilizarem e ver se o escalonamento teve efeito.
+
+## Amazon RDS (Relational Database Service)
+
+RDS significa Relational Database Service
+
+É um serviço de gerenciamento de banco de dados para bancos de dados que usam SQL como linguagem de query.
+
+Permite criar banco de dados na nuvem que são gerenciados pela AWS, podendo ser:
+
+- Postgres
+- MySQL
+- MariaDB
+- Oracle
+- Microsoft SQL Server
+- IBM DB2
+- Aurora (banco de dados proprietário da AWS)
+
+Algumas vantagens que podemos ter ao usar o RDS ao invés de criar um DB direto na nossa instância EC2:
+
+- Por se tratar de um serviço de gerenciamento ele dispõe de outros serviços além do DB:
+  - Provisionamento automático, patch de OS
+  - Backup contínuo o possibilidade de restaurar baseado em um data específica
+  - Dashboards de monitoramento
+  - Possibilidade de configurar em várias AZ para DR (Disaster Recovery)
+  - Janelas de manutenção para upgrades
+  - Possibilidade de escalonamento (horizontal e vertical)
+  - Armazenamento apoiado pelo EBS (gp2 ou io1)
+  - Porém não é possível acessar as instâncias RDS por SSH por se tratar de um serviço gerenciado pela AWS
+  
