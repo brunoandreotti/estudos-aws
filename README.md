@@ -1352,3 +1352,76 @@ Algumas vantagens que podemos ter ao usar o RDS ao invés de criar um DB direto 
   - Armazenamento apoiado pelo EBS (gp2 ou io1)
   - Porém não é possível acessar as instâncias RDS por SSH por se tratar de um serviço gerenciado pela AWS
   
+RDS Storage Auto Scaling
+
+Ajuda a aumentar o armazenamento na instância do DB RDS dinamicamente.
+
+O RDS percebe que o DB está ficando sendo armazenamento e automaticamente escalona ele com o objetivo de evitar a necessidade de escalonamento manual.
+
+Para isso é necessário definir um tamanho máximo para o escalonamento.
+
+O armazenamento será modificado se:
+
+- O armazenamento livre for menor do que 10% do alocado.
+- Se o estado de baixo armazenamento durar pelo menos 5 minutos.
+- Se a última alteração de armazenamento tiver sido há mais de 6 horas.
+
+É especialmente útil para aplicações com volumes de dados imprevisíveis.
+
+### RDS Replicas
+
+RDS Replicas são utilizadas para escalonar a taxa de leitura do DB.
+
+Para isso é possível criar até 15 réplicas na mesma AZ, em AZ diferentes e em regiões diferentes.
+
+As replicações são assíncronas, então as leituras são consistentes.
+
+As réplicas também podem ser promovidas para se tornar um DB próprio e sair do estado de réplica.
+
+É necessário atualizar a string de conexão na aplicação para de ela aproveite as réplicas de leitura.
+
+Casos de uso de réplicas de leitura:
+
+No caso de uma aplicação em produção rodando normalmente com seu banco de dados e sua leitura padrão, porém em algum momento será necessário conectar uma aplicação de relatórios nesse banco de dados que fará muito mais leituras dos dados do DB.
+
+Isso poderá fazer com que o DB fique sobrecarregado e gerar lentidão na aplicação em produção.
+
+Para solucionar o problema é possível criar uma réplica de leitura para que a aplicação de relatórios leia somente da réplica e não impacte o DB em produção.
+
+Lembrando que as réplicas de leitura são apenas para leitura ou seja, para operações de SELECT.
+
+Custos envolvidos nas réplicas de leitura:
+
+Normalmente quando dados transitam de uma AZ para outra tem um custo envolvido.
+
+Porém para caso de replicas de leitura RDS, caso estejam em AZs diferentes mas na mesma região, não é cobrado nenhuma taxa para esse transito de dados entre AZs.
+
+Porém caso as réplicas de leitura e o DB principal estejam em regiões diferentes, será cobrado uma taxa para o transito de dados entre elas.
+
+### RDS Multi AZ
+
+Multi AZ é principalmente utilizado para Disaster Recovery
+
+Nesse caso quando algo é alterado no DB principal, o DB 'clonado' que fica em standby na outra AZ também replica a alteração de forma síncrona. A aplicação utiliza apenas um DNS e caso o DB principal dê problemas ou falhe o DNS redirecionará a aplicação para o DB reserva automaticamente.
+
+Multi AZ não é utilizado para escalonamento uma vez que o DB reserva fica em standby na outra AZ, ou seja, nenhuma aplicação pode alterar dados diretamente dele.
+
+Porém também há o caso de que é possível configurar as réplicas de leitura para atuarem como Multi AZ para Disaster Recovery.
+
+Importante saber:
+
+- Ao alterar de Single AZ para Multi AZ:
+  - Não há necessidade para parar o DB
+  - Só é necessário ir nas configurações do DB e habilitar o Multi AZ.
+  - O que acontece por baixo dos panos é que será criado um snapshot do DB e depois esse snapshot será restaurado em outra AZ, por fim será criado uma sincronização entro o DB principal e o DB clonado em standby.
+
+### Amazon RDS na Prática
+
+- No dashboard do RDS vá em 'dashboards' e clique em 'Create Database'
+- Escolha qual banco de dados você quer (aurora, postgress, mysql e etc)
+- Escolha o tipo (prod, dev ou free)
+- Escolha o tipo de disponibilidade e durabilidade
+- Preenche as credenciais
+- Escolha o tipo da instância
+- Configure o tipo de armazenamento
+- Configura as opções de rede
