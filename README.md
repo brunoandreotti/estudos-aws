@@ -64,6 +64,10 @@
   - [Auto Scaling Group (ASG)](#auto-scaling-group-asg)
   - [Scaling Policies](#scaling-policies)
 - [Amazon RDS (Relational Database Service)](#amazon-rds-relational-database-service)
+  - [RDS Replicas](#rds-replicas)
+  - [RDS Multi AZ](#rds-multi-az)
+  - [Amazon RDS na Prática](#amazon-rds-na-prática)
+  - [RDS Custom](#rds-custom)
 
 ## Casos de uso dos serviços da AWS
 
@@ -1418,10 +1422,26 @@ Importante saber:
 ### Amazon RDS na Prática
 
 - No dashboard do RDS vá em 'dashboards' e clique em 'Create Database'
-- Escolha qual banco de dados você quer (aurora, postgress, mysql e etc)
+- Escolha qual banco de dados você quer (aurora, Postgres, mysql e etc)
 - Escolha o tipo (prod, dev ou free)
 - Escolha o tipo de disponibilidade e durabilidade
 - Preenche as credenciais
 - Escolha o tipo da instância
 - Configure o tipo de armazenamento
-- Configura as opções de rede
+- Configura as opções de rede.
+
+### RDS Custom
+
+Apesar do RDS ser um serviço gerenciado que não conseguimos configurar muitas coisas, temos 2 exceções que podemos configurar.
+
+São bancos Oracle e Microsoft SQL com OS e bancos customizáveis.
+
+Ainda teremos as vantagens do RDS automatizando o setup, operação e escalonamento dos DBs na AWS
+
+Porem com o RDS custom temos acesso ao DB e ao OS para configurar algumas coisas:
+
+- Definir configurações
+- Instalar patches
+- Habilitar funcionalidades nativas
+- Temos acesso à instância EC2 que roda por baixa utilizando SSH e SSM Session Manager.
+- Também é possível desativas as automações do RDS para poder configurar e personalizar de uma maneira mais completa.
