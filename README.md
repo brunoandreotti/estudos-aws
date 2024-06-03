@@ -1445,3 +1445,28 @@ Porem com o RDS custom temos acesso ao DB e ao OS para configurar algumas coisas
 - Habilitar funcionalidades nativas
 - Temos acesso à instância EC2 que roda por baixa utilizando SSH e SSM Session Manager.
 - Também é possível desativas as automações do RDS para poder configurar e personalizar de uma maneira mais completa.
+
+### Amazon Aurora
+
+É uma tecnologia proprietária da AWS, ou seja, não é open source.
+
+Postgres e MySQL são suportados como Aurora DB, significa que os drivers Postgres ou MySQL irão funcionar ao se conectar com um AuroraDB.
+
+A Amazon diz que o Aurora é otimizado para Cloud, sendo mais performático que o Postgres e que o MySQL.
+
+O armazenamento do Aurora aumenta automaticamente, indo de 10GB até 128TB.
+
+Aurora pode ter até 15 réplicas de leitura e o processo de criar replicas também é mais rápido no Aurora.
+
+A recuperação do Aurora caso passe por algum erro é instantânea, dessa forma possuindo uma alta disponibilidade nativa.
+
+Aurora custa um pouco a mais que o RDS porém é mais eficiente.
+
+Alta escalabilidade e Escalonamento de leitura no Aurora pois você possui:
+
+- 6 copias de seus dados entre 3 AZs diferentes
+  - Aurora precisa apenas de 4 funcionando das 6 instâncias para escrever
+  - Aurora precisa apenas de 3 funcionando das 6 instâncias para ler
+  - Consegue corrigir automaticamente caso algo dado em alguma instância esteja com algum problema
+  - Armazenado é espalhado entre centenas de volumes
+  
