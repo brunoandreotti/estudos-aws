@@ -1469,4 +1469,69 @@ Alta escalabilidade e Escalonamento de leitura no Aurora pois você possui:
   - Aurora precisa apenas de 3 funcionando das 6 instâncias para ler
   - Consegue corrigir automaticamente caso algo dado em alguma instância esteja com algum problema
   - Armazenado é espalhado entre centenas de volumes
-  
+- Uma instância do Aurora é utilizado para escrita e caso ela falhe a substituição é feita automaticamente em cerca de 30 segundos
+- Até 15 replica de leitura, ficando uma estrutura de 1 Master + 15 Replicas, também suportando replicas em diferentes regiões.
+- As réplicas podem possuem um sistema de auto escalonamento para sempre ter o número necessário de replicas de leitura dependendo da demanda
+
+Aurora DB Cluster:
+
+Para escrever coisas no Aurora é disponibilizado um 'Writer Endpoint' que se trata de um endereço DNS que aponta para o instância Master(instância de escrita).
+
+Por ter o sistema de auto escalonamento, ficaria difícil para as aplicações que forem se conectar saber em qual replica de conectar ou qual replica está funcionando ou não.
+
+Para isso é disponibilizado um 'Reader Endpoint' que se trata de um endereço que aponta para um LB que fará a distribuição para as réplicas.
+
+Principais características do Aurora:
+
+- Recuperação automática em caso de falhas
+- Backup e Recovery
+- Isolation e Security
+- Facilidade no escalonamento
+- Patching automático com tempo de indisponibilidade zero
+- Monitoramento Avançado
+- Retina de manutenção
+- Backtrack: restaure os dados em qualquer ponto do tempo sem usar backups.
+
+### Aurora Replicas - Conceitos Avançados
+
+Auto Escalonamento:
+
+Caso seja necessário aumentar o número de replicas de leitura com o auto escalonamento, por exemplo, por que as 2 instâncias existentes tiveram uma alta demanda de leitura, o reader endpoint será estendido para cobrir também as novas replicas que foram geradas, dando acesso a todas as instâncias, sendo elas as já existentes que as novas que foram geradas.
+
+Custom Endpoints:
+
+Vamos supor que temos 4 replicas, porém duas delas utilizada um tipo de instância X e as outras duas utilizam um tipo de instância Y.
+
+É possível criar um custom endpoint para acessar especificamente um tipo de instância do Aurora caso necessário (um exemplo seria as instâncias Y sendo de um tipo mais performático do que as instâncias X).
+
+Apesar do reader endpoint não desaparecer quando utilizamos custom endpoints, ná prática, uma vez que é utilizado custom endpoint, o reader endpoint não é mais utilizado e passa-se a criar custom endpoint para diferentes finalidades.
+
+Aurora Serverless:
+
+Serve para instanciação e auto escalonamento automatizado baseado na utilização atual.
+
+Útil para cargas de trabalho que são infrequentes, intermitentes e imprevisíveis por não precisar configurar um planejar a capacidade e será pago por segundo de uso podendo ser mais efetivo quando se diz em custo.
+
+Global Aurora:
+
+- Replicas de leitura do Aurora em múltiplas regiões
+  - Útil para disaster recovery
+  - Simples de configurar
+
+- Aurora Global Database
+  - 1 região primária de escrita e leitura
+  - Até 5 outras regiões secundárias para leitura
+  - Até 16 replicas de leitura por cada região
+  - Isso faz com que a normalização em caso de falha aconteça de maneira muito rápida
+  - Replicação de dados entre regiões ocorre em menos de 1 segundo
+
+Aurora Machine Learning:
+
+Permite adicionar Machine Learning based predictions na aplicação via SQL
+
+Integração simples, otimizado e segura entra Aurora e serviços de Machine Learning da AWS
+
+Serviços suportados:
+
+- Amazon SageMaker
+- Amazon Comprehend
