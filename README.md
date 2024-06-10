@@ -68,7 +68,9 @@
   - [RDS Multi AZ](#rds-multi-az)
   - [Amazon RDS na Prática](#amazon-rds-na-prática)
   - [RDS Custom](#rds-custom)
-
+  - [Amazon Aurora](#amazon-aurora)
+  - [Aurora Replicas - Conceitos Avançados](#aurora-replicas---conceitos-avançados)
+  
 ## Casos de uso dos serviços da AWS
 
 - Permite criar aplicações escaláveis e sofisticadas
@@ -1535,3 +1537,133 @@ Serviços suportados:
 
 - Amazon SageMaker
 - Amazon Comprehend
+
+### RDS e Aurora Backups
+
+RDS Backups:
+
+- Backups automáticos
+  - Backup diário de todo o banco de dados durante a janela de backup.
+  - Os Transaction logs são feitos backups pelo RDS a cada 5 minutos.
+    - Isso permite restaurar para qualquer ponto no tempo (do backup mais antigo até 5 minutos atrás).
+  - Pode ser configurado de 1 a 35 dias de retenção ou 0 para desabilitar os backups automáticos.
+
+- Manual DB Snapshots
+  - Engatilhado manualmente pelo usuário.
+  - Possui uma retenção tão longa quanto o usuário quiser.
+
+Para um DB RDS parado, ainda será cobrado pelo armazenamento, então, caso o planejamento seja de deixar o DB parado por muito tempo, o indicado é efetuar um snapshot dele e depois restaurar quando necessário. O snapshot irá custar bem menos do que deixar os dados armazenamos no DB parado.
+
+Aurora Backups:
+
+- Backups automáticos
+  - Pode ser configurado de 1 a 35 dias de retenção e não pode ser desabilitado
+  - Possível recuperar em qualquer ponto do tempo
+
+- Manual DB Snapshots
+  - Engatilhado manualmente pelo usuário.
+  - Possui uma retenção tão longa quanto o usuário quiser.
+
+Opções de restauração RDS e Aurora:
+
+- Restaurar um backup ou snapshot do RDS ou Aurora cria um novo DB
+- É possível restaurar um DB MySQL RDS a partir de um S3
+  - Criar um backup dos DB on-premises
+  - Armazenar o arquivo de backup no Amazon S3
+  - Restaurar o arquivo de backup em uma nova instância RDS rodando MySQL
+
+- É possível restaurar um cluster de Aurora MYSQL em um S3
+  - Criar um backup dos DBs on-premises usando Percona XtraBackup
+  - Armazenar a arquivo de backup no Amazon S3
+  - Restaurar o arquivo de backup em um novo Aurora cluster rodando MySQL
+
+Aurora Database Cloning:
+
+- Cria um novo Aurora DB Cluster a partir de um já existente
+
+Um uso de caso é precisar realizar testes em um DB Aurora em produção, mas para ser mais seguro é possível criar um clone desse DB Aurora e é mais rápido do que fazer um snapshot e restaurar pois utilizada o protocolo 'copy-on-write'
+
+### RDS e Aurora Security
+
+- Encriptação de dados
+  - DB master e as réplicas são encriptados utilizando AWS KMS
+  - Se o master não for encriptado as réplicas também não poderão ser encriptadas
+  - Para encriptar um DB não encriptado, utilize um snapshot dele e restaure como encriptado.
+
+- Encriptação de dados In-flight
+  - TLS-ready por padrão, utiliza o AWS TLS root certificates client-side.
+
+- Autenticação IAM: Possível utilizar IAM Roles para conectar aos DB ao invés de user/senha.
+
+- Security Groups: Controlar os acessos na rede dos DBs RDS e Aurora.
+
+- RDS e Aurora não possuem acesso via SSH, com exceção do RDS Custom
+
+- Audit Logs podem ser habilitados e enviados para o CloudWatch Logs.
+
+### RDS Proxy
+
+- Proxy de DB totalmente gerenciado para o RDS
+- Permite aplicações fazerem pool e compartilharem as conexões estabelecidas com DB
+  - Todas as conexões ao DB serão conectadas antes em um proxy que fará um pool dessas conexões (juntar as conexões) para ter menos conexões acessando o banco simultaneamente.
+  - Isso ira aumentar a eficiência do DB pois irá diminuir o consumo de recursos por conta do menor número de conexões.
+- É Serverless, auto escalonável e possui alta disponibilidade (multi-AZ)
+- Diminui o tempo levado para o RDS ou Aurora de recuperarem de alguma falha.
+- Suporta RDS (MySQL, Postgres, MariaDB, MS SQL Server) e Aurora
+- Não requer alteração de código na aplicação, somente indicar que ao invés de utilizar o endereço de conexão direto do banco, irá utilizar o endereço de conexão do proxy.
+- Não pode ser acessado publicamente, somente pode ser acessado dentro da VPC.
+- será util para lidar com Lambda functions pois normalmente as lambdas acessam as conexões muito rápido e por várias vezes, com o proxy, o gerenciamento dessas conexões será melhor, evitando alto consumo de recursos do DB
+
+### Amazon ElastiCache
+
+Permite um serviço gerenciado de Redis ou Memcached ou seja bancos com a finalidade de cache.
+
+Bancos de cache são banco em memória com performance muito alta e baixa latência.
+
+Ajuda na performance pois evita de acessar o banco repetidas vezes para buscar sempre a mesma informação.
+
+Aws fica responsável por atualização do OS, patching, config de setup, monitoramento, recuperação em casos de falha e backups.
+
+Porém ao usar o Amazon ElastiCache, demandará grande alteração no código da aplicação, por se tratar de cache a regra de negócio precisará ser alterada para conseguir usufruir dos benefícios do cache.
+
+Redis x Memcached
+
+- Redis
+  - Multi-AZ com Auto-Failover
+  - Replicas de leitura para escalonamento de leitura e alta disponibilidade.
+  - Data Durability usando persistência AOF
+  - Funcionalidade de restauração e backup
+  - Suporta Sets e Sorted Sets
+
+- Memcached
+  - Multi-node for partitioning of data (sharding)
+  - Sem alta disponibilidade (replicação)
+  - Sem persistência
+  - Sem backup e restauração
+  - Arquitetura multi thread
+  
+### ElastiCache for Solution Architect
+
+Cache security:
+
+- ElastiCache suporta IAM Authentication para Redis
+- IAM Policies no ElastiCache são usadas somente para AWS API-Level Security.
+- Redis AUTH:
+  - É possível criar um password/token para acessar quando cria um cluster de Redis.
+  - Sendo assim uma camada a mais de segurança para o cache.
+  - Suporta SSL in flight encryption
+
+- Memcached:
+  - Suporta SASL-based authentication
+
+Padrões de carregamento no ElastiCache:
+
+- Lazy Loading: todo os dados lidos são armazenados no cache, dados podem ficar obsoletos no cache.
+- Write Through: Adiciona ou atualizada dados no cache quando o dado é escrito no DB (sem dados obsoletos)
+- Session Store: Armazena dados temporários no cache (utilizando TTL).
+
+Casos de uso do ElastiCache:
+
+- Montar o ranking de pontuação de um jogo:
+  - É difícil de manter o ranking atualizado a todo o momento em tempo real, para isso existe uma funcionalidade chamada Redis Sorted Sets que garante que os dados serão únicos e ordenados.
+  - Toda vez que um novo elemento é adicionado, ele é ranqueado em tempo real e adicionado na ordem certa.
