@@ -70,7 +70,13 @@
   - [RDS Custom](#rds-custom)
   - [Amazon Aurora](#amazon-aurora)
   - [Aurora Replicas - Conceitos Avançados](#aurora-replicas---conceitos-avançados)
-  
+  - [RDS e Aurora Backups](#rds-e-aurora-backups)
+  - [RDS e Aurora Security](#rds-e-aurora-security)
+  - [RDS Proxy](#rds-proxy)
+  - [Amazon ElastiCache](#amazon-elasticache)
+  - [ElastiCache for Solution Architect](#elasticache-for-solution-architect)
+- [Rouse 53](#route-53)
+
 ## Casos de uso dos serviços da AWS
 
 - Permite criar aplicações escaláveis e sofisticadas
@@ -1667,3 +1673,82 @@ Casos de uso do ElastiCache:
 - Montar o ranking de pontuação de um jogo:
   - É difícil de manter o ranking atualizado a todo o momento em tempo real, para isso existe uma funcionalidade chamada Redis Sorted Sets que garante que os dados serão únicos e ordenados.
   - Toda vez que um novo elemento é adicionado, ele é ranqueado em tempo real e adicionado na ordem certa.
+
+## Route 53
+
+### O que é DNS?
+
+Domain Name System - Irá traduzir um endereço url em um endereço ip de servidor, por ex:
+
+google.com => 172.217.18.36
+
+O ip será o que o navegador utilizará por baixo dos panos para acessar aquele site/servidor.
+
+DNS utiliza um sistema de nomenclatura hierárquico, .com o mais geral, google.com mais específico, api.google.com, mais específico e assim por diante.
+
+Terminologias do DNS:
+
+- Domain Registrar: É onde você registra seu domínio (Amazon Route 53, Hostinger, GoDaddy).
+- DNS Records: A, AAA, CNAME, NS
+- Zone File: Contém os registros do DNS
+- Name Server: Resolve as chamadas do DNS
+- Top Level Domain (TLD): .com, .br, .gov
+- Second Level Domain (SLD): amazon.com, google.com
+ Exemplo:
+
+ [http://api.www.exemple.com] -> URL
+
+ .com -> TLD
+ .exemple.com -> SLD
+ .www.example.com -> Sub Domínio
+ api.www.exemple.com -> FQDN (Fully Qualified Domain Name)
+ http -> Protocolo
+
+ E todos juntos formam a URL.
+
+ Como DNS funciona:
+
+ Temos um servidor web que possui um IP público (9.10.11.12, por exemplo) e queremos acessar através de um domínio (exemplo.com).
+
+ Primeiramente, precisaremos registrar o domínio em algum site que faça isso.
+
+Após isso o navegador irá acessar o domínio e enviar uma requisição para um Local DNS Server (que normalmente está ligado ao provedor de internet). Este servidor local irá chamar o Root DNA Server (que é gerenciado pelo ICANN) que buscara pelo tipo de IP referente ao root do domínio (nesse caso .com). Após ter essa informação o navegador irá chamar outro servidor chamado TLD DNA Server responsável pelo .com e irá dar mais algumas informações referente a esse domínio, por fim, será chamado o SLD DNS Server que é gerenciado pelo site/serviço em que o domínio foi registrado e esse sim terá a informação de para qual IP público o endereço que queremos acessar está apontando.
+
+### Visão Geral Route 53
+
+É um serviço de DNS de alta disponibilidade, escalabilidade e totalmente gerenciável.
+
+Também é um Domain Registrar, ou seja, conseguimos registrar domínios por ele.
+
+Podemos também fazer o Health Check dos nossos recursos.
+
+Route 53 recebe esse nome pois 53 faz referência ao número de porta tradicional utilizado por DNS.
+
+O que são Records:
+
+-Específica como queremos rotear um tráfego para um domínio.
+
+- Cada Record terá:
+  - Nome de domínio/subdomínio
+  - Tipo do Record  -> (A, AAAA)
+  - Valor -> 12.34.56.78
+  - Routing Policies -> Como o Route 53 irá responder as requisições.
+  - TTL -> Quantidade de tempo que um Record ficará cacheado nos DNS Resolvers
+- Route 53 suporta os seguintes tipos de DNS records:
+  - A/AAAA/CNAME/NS -> IMPORTANTE SABER
+  
+Tipos de Records:
+
+- A -> mapeia um hostname para um IPv4 (exemplo.com para 1.2.3.4, por exemplo)
+- AAAA -> mapeia um hostname para um IPv6
+- CNAME -> mapeia um hostname para outro hostname (o domínio alvo precisa ser um domínio que tenha um record A ou AAAA)
+  - Can`t create CNAME record for the top node of a DNS namespace (Zone Apex)
+  - Exemplo: não é possível criar um CNAME para exemplo.com mas é possível criar para www .exemple.com.
+- NS -> Name Servers for the Hosted Zone
+
+O que são Hosted Zones:
+
+São um container para records que definem como rotear tráfego para um domínio e seus subdomínios.
+
+- Public Hosted Zones -> Contém records que especificam como rotear tráfego para a Internet para nomes de domínio público.
+- Private Hosted Zones -> Contém records que especificam como rotear tráfego entre uma ou mais VPC (nomes de domínio privados).
